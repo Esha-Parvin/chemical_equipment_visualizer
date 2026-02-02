@@ -13,6 +13,24 @@ import {
 } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 
+/* Format ISO timestamp to Indian Standard Time (IST) */
+const formatToIST = (isoString) => {
+  try {
+    const date = new Date(isoString);
+    return date.toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch {
+    return isoString;
+  }
+};
+
 /* Register Chart.js components */
 ChartJS.register(
   CategoryScale,
@@ -42,6 +60,16 @@ function Dashboard() {
   const [history, setHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState('');
+
+  /* PDF download state */
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState('');
+
+  /* View results state - only show after clicking view */
+  const [showResults, setShowResults] = useState(false);
+
+  /* Delete history state */
+  const [isDeletingHistory, setIsDeletingHistory] = useState(false);
 
   /* Animation state */
   const [isLoaded, setIsLoaded] = useState(false);
@@ -101,7 +129,7 @@ function Dashboard() {
     }
   }, [fetchSummary, fetchHistory]);
 
-  /* Handle logout */
+/* Handle logout */
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
@@ -148,6 +176,60 @@ function Dashboard() {
     }
   };
 
+  /* Download PDF report */
+  const handleDownloadPdf = async () => {
+    setIsDownloadingPdf(true);
+    setPdfError('');
+
+    try {
+      const res = await api.get('/api/report/', {
+        responseType: 'blob'
+      });
+
+      /* Create blob URL and trigger download */
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'chemical_equipment_report.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setPdfError(err.response?.data?.error || 'Failed to download PDF report.');
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  /* Handle view results */
+  const handleViewResults = () => {
+    if (summary) {
+      setShowResults(true);
+    }
+  };
+
+  /* Handle clear history */
+  const handleClearHistory = async () => {
+    if (history.length === 0) return;
+    
+    const confirmed = window.confirm('Are you sure you want to clear all upload history?');
+    if (!confirmed) return;
+
+    setIsDeletingHistory(true);
+    try {
+      await api.delete('/api/history/');
+      setHistory([]);
+      setSummary(null);
+      setShowResults(false);
+    } catch (err) {
+      setHistoryError('Failed to clear history.');
+    } finally {
+      setIsDeletingHistory(false);
+    }
+  };
+
   return (
     <div className="app-container">
       <header className={`app-header ${isLoaded ? 'fade-in' : ''}`}>
@@ -186,48 +268,74 @@ function Dashboard() {
             >
               {isUploading ? '⏳ Uploading...' : '🚀 Upload CSV'}
             </button>
+
+            <button
+              className="view-btn"
+              onClick={handleViewResults}
+              disabled={!summary || showResults}
+              title={!summary ? 'Upload data first' : 'View analysis results'}
+            >
+              👁️ View Results
+            </button>
+
+            <button
+              className="download-pdf-btn"
+              onClick={handleDownloadPdf}
+              disabled={isDownloadingPdf || !summary}
+              title={!summary ? 'Upload data first to generate report' : 'Download PDF Report'}
+            >
+              {isDownloadingPdf ? '⏳ Generating...' : '📄 Download PDF'}
+            </button>
           </div>
 
           {selectedFile && <p className="file-selected">{selectedFile.name}</p>}
           {uploadMessage && <p className="success-message">{uploadMessage}</p>}
           {uploadError && <p className="error-message">{uploadError}</p>}
+          {pdfError && <p className="error-message">{pdfError}</p>}
 
           <p className="hint">
             Required columns: Equipment Name, Type, Flowrate, Pressure, Temperature
           </p>
         </section>
 
-        {/* Summary */}
-        <section className={`section summary-section ${isLoaded ? 'fade-slide-in' : ''}`} style={{ animationDelay: '0.2s' }}>
-          <h2>📊 Summary Dashboard</h2>
+        {/* Summary - Only show when showResults is true */}
+        {showResults && summary && (
+          <section className={`section summary-section ${isLoaded ? 'fade-slide-in' : ''}`} style={{ animationDelay: '0.2s' }}>
+            <h2>📊 Summary Dashboard</h2>
 
-          {summaryLoading && <p className="loading-state">Loading summary...</p>}
-          {summaryError && <p className="error-message">{summaryError}</p>}
+            {summaryLoading && <p className="loading-state">Loading summary...</p>}
+            {summaryError && <p className="error-message">{summaryError}</p>}
 
-          {summary && (
             <div className="summary-cards">
-              <div className="card" style={{ animationDelay: '0.25s' }}>
+              <div className="card card-records" style={{ animationDelay: '0.25s' }}>
+                <div className="card-icon">📋</div>
                 <h3>Total Records</h3>
                 <p className="card-value">{summary.total_rows}</p>
               </div>
-              <div className="card" style={{ animationDelay: '0.3s' }}>
+              <div className="card card-flowrate" style={{ animationDelay: '0.3s' }}>
+                <div className="card-icon">💧</div>
                 <h3>Avg Flowrate</h3>
                 <p className="card-value">{summary.averages.flowrate}</p>
+                <span className="card-unit">m³/h</span>
               </div>
-              <div className="card" style={{ animationDelay: '0.35s' }}>
+              <div className="card card-pressure" style={{ animationDelay: '0.35s' }}>
+                <div className="card-icon">⚡</div>
                 <h3>Avg Pressure</h3>
                 <p className="card-value">{summary.averages.pressure}</p>
+                <span className="card-unit">bar</span>
               </div>
-              <div className="card" style={{ animationDelay: '0.4s' }}>
+              <div className="card card-temperature" style={{ animationDelay: '0.4s' }}>
+                <div className="card-icon">🌡️</div>
                 <h3>Avg Temperature</h3>
                 <p className="card-value">{summary.averages.temperature}</p>
+                <span className="card-unit">°C</span>
               </div>
             </div>
-          )}
-        </section>
+          </section>
+        )}
 
-        {/* Charts */}
-        {summary && (
+        {/* Charts - Only show when showResults is true */}
+        {showResults && summary && (
           <section className={`section charts-section ${isLoaded ? 'fade-slide-in' : ''}`} style={{ animationDelay: '0.3s' }}>
             <h2>📈 Data Visualization</h2>
 
@@ -332,7 +440,18 @@ function Dashboard() {
 
         {/* History */}
         <section className={`section history-section ${isLoaded ? 'fade-slide-in' : ''}`} style={{ animationDelay: '0.4s' }}>
-          <h2>📁 Upload History</h2>
+          <div className="history-header">
+            <h2>📁 Upload History</h2>
+            {history.length > 0 && (
+              <button
+                className="clear-history-btn"
+                onClick={handleClearHistory}
+                disabled={isDeletingHistory}
+              >
+                {isDeletingHistory ? '⏳ Clearing...' : '🗑️ Clear History'}
+              </button>
+            )}
+          </div>
 
           {historyLoading && <p className="loading-state">Loading history...</p>}
           {historyError && <p className="error-message">{historyError}</p>}
@@ -352,7 +471,7 @@ function Dashboard() {
                     <tr key={i}>
                       <td>{i + 1}</td>
                       <td>{h.file_name.split('\\').pop()}</td>
-                      <td>{h.uploaded_at}</td>
+                      <td>{formatToIST(h.uploaded_at)}</td>
                     </tr>
                   ))}
                 </tbody>

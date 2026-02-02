@@ -170,6 +170,49 @@ body.login-page-active {
   font-size: 0.8rem;
 }
 
+/* ========== SUCCESS MESSAGE ========== */
+.login-success {
+  color: #059669;
+  background: #ecfdf5;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* ========== OPTIONAL LABEL ========== */
+.optional {
+  color: #94a3b8;
+  font-weight: 400;
+  font-size: 0.85em;
+}
+
+/* ========== MODE TOGGLE ========== */
+.login-toggle {
+  text-align: center;
+  margin-top: 20px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  color: #6366f1;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  margin-left: 4px;
+  transition: color 0.2s ease;
+}
+
+.toggle-btn:hover {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
 /* ========== RESPONSIVE ========== */
 @media (max-width: 480px) {
   .login-container {

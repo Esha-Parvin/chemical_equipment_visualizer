@@ -76,6 +76,51 @@ class APIClient:
             return {"success": False, "message": "Request timed out"}
         except Exception as e:
             return {"success": False, "message": str(e)}
+
+    def register(self, username: str, password: str, confirm_password: str, email: str = "") -> Dict[str, Any]:
+        """
+        Register a new user account.
+        
+        Args:
+            username: Desired username (min 3 chars)
+            password: Password (min 8 chars)
+            confirm_password: Password confirmation
+            email: Optional email address
+            
+        Returns:
+            Dict with success status and message
+        """
+        try:
+            payload = {
+                "username": username,
+                "password": password,
+                "confirm_password": confirm_password
+            }
+            if email:
+                payload["email"] = email
+                
+            response = requests.post(
+                f"{self.base_url}/api/register/",
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=10
+            )
+            
+            if response.status_code == 201:
+                data = response.json()
+                return {"success": True, "message": data.get("message", "Registration successful!")}
+            
+            else:
+                data = response.json()
+                error_msg = data.get("error", "Registration failed")
+                return {"success": False, "message": error_msg}
+                
+        except requests.exceptions.ConnectionError:
+            return {"success": False, "message": "Cannot connect to server"}
+        except requests.exceptions.Timeout:
+            return {"success": False, "message": "Request timed out"}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
     
     def logout(self):
         """Clear stored tokens."""
@@ -166,6 +211,30 @@ class APIClient:
                     response = requests.post(url, headers=headers, files=files, timeout=30)
                 else:
                     response = requests.post(url, headers=self.headers, json=data, timeout=10)
+        
+        return response
+
+    def delete(self, endpoint: str) -> requests.Response:
+        """
+        Make authenticated DELETE request.
+        
+        Args:
+            endpoint: API endpoint
+            
+        Returns:
+            Response object
+        """
+        url = f"{self.base_url}{endpoint}"
+        headers = self.headers.copy()
+        headers.pop("Content-Type", None)  # Not needed for DELETE
+        
+        response = requests.delete(url, headers=headers, timeout=10)
+        
+        # Try to refresh token on 401
+        if response.status_code == 401 and self._refresh_token:
+            if self.refresh_access_token():
+                headers["Authorization"] = f"Bearer {self._access_token}"
+                response = requests.delete(url, headers=headers, timeout=10)
         
         return response
 

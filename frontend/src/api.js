@@ -43,6 +43,17 @@ api.interceptors.response.use(
 
 /* Auth helper functions */
 export const authService = {
+  /* Register a new user account */
+  register: async (username, password, confirmPassword, email = '') => {
+    const response = await axios.post(`${API_BASE_URL}/api/register/`, {
+      username,
+      password,
+      confirm_password: confirmPassword,
+      email: email || undefined,
+    });
+    return response.data;
+  },
+
   /* Login and store tokens */
   login: async (username, password) => {
     const response = await axios.post(`${API_BASE_URL}/api/token/`, {
