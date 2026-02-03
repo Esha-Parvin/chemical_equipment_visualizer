@@ -153,7 +153,18 @@ SIMPLE_JWT = {
 # =========================
 # CORS CONFIGURATION
 # =========================
-CORS_ALLOW_ALL_ORIGINS = True
+# Allow specific origins for security
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://chemical-equipment-visualizer-one.vercel.app",
+]
+
+# Also allow any Vercel preview deployments
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://chemical-equipment-visualizer-.*\.vercel\.app$",
+]
+
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
