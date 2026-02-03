@@ -7,13 +7,12 @@ import os
 # =========================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # =========================
 # SECURITY
 # =========================
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
-    "django-insecure-dev-only-change-in-production"
+    "django-insecure-local-dev-key"
 )
 
 DEBUG = os.environ.get("DEBUG", "True") == "True"
@@ -23,7 +22,6 @@ ALLOWED_HOSTS = [
     "localhost",
     ".onrender.com",   # REQUIRED for Render
 ]
-
 
 # =========================
 # APPLICATIONS
@@ -44,12 +42,11 @@ INSTALLED_APPS = [
     'api',
 ]
 
-
 # =========================
 # MIDDLEWARE
 # =========================
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',   # MUST be first
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,12 +56,10 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 # =========================
 # URL CONFIG
 # =========================
 ROOT_URLCONF = 'chemical_api.urls'
-
 
 # =========================
 # TEMPLATES
@@ -85,12 +80,10 @@ TEMPLATES = [
     },
 ]
 
-
 # =========================
 # WSGI
 # =========================
 WSGI_APPLICATION = 'chemical_api.wsgi.application'
-
 
 # =========================
 # DATABASE
@@ -102,7 +95,6 @@ DATABASES = {
     }
 }
 
-
 # =========================
 # PASSWORD VALIDATION
 # =========================
@@ -113,7 +105,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
 # =========================
 # LANGUAGE & TIMEZONE
 # =========================
@@ -122,9 +113,8 @@ TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-
 # =========================
-# STATIC & MEDIA (REQUIRED FOR RENDER)
+# STATIC & MEDIA
 # =========================
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -132,12 +122,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'uploaded_files'
 
-
 # =========================
 # DEFAULT PRIMARY KEY
 # =========================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
 
 # =========================
 # DJANGO REST FRAMEWORK
@@ -151,7 +139,6 @@ REST_FRAMEWORK = {
     ),
 }
 
-
 # =========================
 # JWT CONFIGURATION
 # =========================
@@ -163,12 +150,10 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-
 # =========================
-# CORS CONFIGURATION (React + Desktop)
+# CORS CONFIGURATION
 # =========================
 CORS_ALLOW_ALL_ORIGINS = True
-
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = [
@@ -189,13 +174,4 @@ CORS_ALLOW_METHODS = [
     'PATCH',
     'POST',
     'PUT',
-]
-
-
-# =========================
-# CSRF (IMPORTANT FOR DEPLOYMENT)
-# =========================
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "https://*.onrender.com",
 ]
