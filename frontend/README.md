@@ -1,6 +1,45 @@
-# Getting Started with Create React App
+# Chemical Equipment Visualizer - Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the React frontend for the Chemical Equipment Visualizer application.
+
+## Environment Variables
+
+Create a `.env.local` file in the frontend directory with:
+
+```
+REACT_APP_API_URL=http://127.0.0.1:8000
+```
+
+For production, set the `REACT_APP_API_URL` to your deployed backend API URL.
+
+## Deploying to Vercel
+
+### Option 1: Deploy via Vercel CLI
+
+1. Install Vercel CLI: `npm i -g vercel`
+2. Run `vercel` in the frontend directory
+3. Follow the prompts to link your project
+4. Set the environment variable in Vercel:
+   ```
+   vercel env add REACT_APP_API_URL
+   ```
+5. Deploy to production: `vercel --prod`
+
+### Option 2: Deploy via Vercel Dashboard
+
+1. Push your code to GitHub/GitLab/Bitbucket
+2. Go to [vercel.com](https://vercel.com) and import your repository
+3. Set the **Root Directory** to `frontend`
+4. Add the environment variable:
+   - Name: `REACT_APP_API_URL`
+   - Value: Your backend API URL (e.g., `https://your-api.example.com`)
+5. Deploy!
+
+### Environment Variables in Vercel
+
+| Variable | Description |
+|----------|-------------|
+| `REACT_APP_API_URL` | The URL of your backend API server |
 
 ## Available Scripts
 

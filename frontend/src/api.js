@@ -1,20 +1,9 @@
 import axios from 'axios';
 
-/* ==============================
-   Backend API base URL
-   ============================== */
+/* Backend API base URL - uses environment variable for production deployment */
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000';
 
-/*
-  IMPORTANT:
-  - Local: use .env with REACT_APP_API_BASE_URL=http://127.0.0.1:8000
-  - Production (Vercel): set env variable in Vercel dashboard
-*/
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
-
-/* ==============================
-   Axios instance
-   ============================== */
+/* Create axios instance with default config */
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -22,10 +11,7 @@ const api = axios.create({
   },
 });
 
-/* ==============================
-   Request interceptor
-   Attach JWT token
-   ============================== */
+/* Request interceptor - attach JWT token to every request */
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
@@ -34,32 +20,30 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-/* ==============================
-   Response interceptor
-   Handle 401 (token expired)
-   ============================== */
+/* Response interceptor - handle 401 errors */
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      /* Clear tokens and trigger logout */
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-
-      /* Notify app to logout */
+      
+      /* Dispatch custom event to notify App component */
       window.dispatchEvent(new Event('auth:logout'));
     }
     return Promise.reject(error);
   }
 );
 
-/* ==============================
-   Authentication Service
-   ============================== */
+/* Auth helper functions */
 export const authService = {
-  /* Register new user */
+  /* Register a new user account */
   register: async (username, password, confirmPassword, email = '') => {
     const response = await axios.post(`${API_BASE_URL}/api/register/`, {
       username,
@@ -70,46 +54,45 @@ export const authService = {
     return response.data;
   },
 
-  /* Login user */
+  /* Login and store tokens */
   login: async (username, password) => {
     const response = await axios.post(`${API_BASE_URL}/api/token/`, {
       username,
       password,
     });
-
+    
     const { access, refresh } = response.data;
     localStorage.setItem('access_token', access);
     localStorage.setItem('refresh_token', refresh);
-
+    
     return response.data;
   },
 
-  /* Logout */
+  /* Logout and clear tokens */
   logout: () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
   },
 
-  /* Auth check */
+  /* Check if user is authenticated */
   isAuthenticated: () => {
     return !!localStorage.getItem('access_token');
   },
 
-  /* Refresh token */
+  /* Refresh access token */
   refreshToken: async () => {
     const refresh = localStorage.getItem('refresh_token');
     if (!refresh) {
       throw new Error('No refresh token');
     }
 
-    const response = await axios.post(
-      `${API_BASE_URL}/api/token/refresh/`,
-      { refresh }
-    );
+    const response = await axios.post(`${API_BASE_URL}/api/token/refresh/`, {
+      refresh,
+    });
 
     const { access } = response.data;
     localStorage.setItem('access_token', access);
-
+    
     return access;
   },
 };
