@@ -1,9 +1,20 @@
 import axios from 'axios';
 
-/* Backend API base URL */
-const API_BASE_URL = 'http://127.0.0.1:8000';
+/* ==============================
+   Backend API base URL
+   ============================== */
 
-/* Create axios instance with default config */
+/*
+  IMPORTANT:
+  - Local: use .env with REACT_APP_API_BASE_URL=http://127.0.0.1:8000
+  - Production (Vercel): set env variable in Vercel dashboard
+*/
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || 'http://127.0.0.1:8000';
+
+/* ==============================
+   Axios instance
+   ============================== */
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -11,7 +22,10 @@ const api = axios.create({
   },
 });
 
-/* Request interceptor - attach JWT token to every request */
+/* ==============================
+   Request interceptor
+   Attach JWT token
+   ============================== */
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
@@ -20,30 +34,32 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-/* Response interceptor - handle 401 errors */
+/* ==============================
+   Response interceptor
+   Handle 401 (token expired)
+   ============================== */
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      /* Clear tokens and trigger logout */
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
-      
-      /* Dispatch custom event to notify App component */
+
+      /* Notify app to logout */
       window.dispatchEvent(new Event('auth:logout'));
     }
     return Promise.reject(error);
   }
 );
 
-/* Auth helper functions */
+/* ==============================
+   Authentication Service
+   ============================== */
 export const authService = {
-  /* Register a new user account */
+  /* Register new user */
   register: async (username, password, confirmPassword, email = '') => {
     const response = await axios.post(`${API_BASE_URL}/api/register/`, {
       username,
@@ -54,45 +70,46 @@ export const authService = {
     return response.data;
   },
 
-  /* Login and store tokens */
+  /* Login user */
   login: async (username, password) => {
     const response = await axios.post(`${API_BASE_URL}/api/token/`, {
       username,
       password,
     });
-    
+
     const { access, refresh } = response.data;
     localStorage.setItem('access_token', access);
     localStorage.setItem('refresh_token', refresh);
-    
+
     return response.data;
   },
 
-  /* Logout and clear tokens */
+  /* Logout */
   logout: () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
   },
 
-  /* Check if user is authenticated */
+  /* Auth check */
   isAuthenticated: () => {
     return !!localStorage.getItem('access_token');
   },
 
-  /* Refresh access token */
+  /* Refresh token */
   refreshToken: async () => {
     const refresh = localStorage.getItem('refresh_token');
     if (!refresh) {
       throw new Error('No refresh token');
     }
 
-    const response = await axios.post(`${API_BASE_URL}/api/token/refresh/`, {
-      refresh,
-    });
+    const response = await axios.post(
+      `${API_BASE_URL}/api/token/refresh/`,
+      { refresh }
+    );
 
     const { access } = response.data;
     localStorage.setItem('access_token', access);
-    
+
     return access;
   },
 };
