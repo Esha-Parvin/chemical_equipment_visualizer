@@ -2,6 +2,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "build",
   "framework": "create-react-app",
+  "env": {
+    "REACT_APP_API_URL": "https://chemical-equipment-visualizer-1-majo.onrender.com"
+  },
   "rewrites": [
     {
       "source": "/((?!api/).*)",
