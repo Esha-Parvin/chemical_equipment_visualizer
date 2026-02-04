@@ -2,7 +2,7 @@ services:
   - type: web
     name: chemical-equipment-api
     runtime: python
-    buildCommand: "./build.sh"
+    buildCommand: "bash build.sh"
     startCommand: "cd backend && gunicorn chemical_api.wsgi:application"
     envVars:
       - key: DJANGO_SECRET_KEY
